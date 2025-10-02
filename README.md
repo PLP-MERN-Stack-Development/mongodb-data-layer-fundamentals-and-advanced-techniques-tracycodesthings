@@ -1,59 +1,91 @@
-# MongoDB Fundamentals - Week 1
+# MongoDB Bookstore Project
 
-## Setup Instructions
+This project demonstrates basic MongoDB queries, updates, aggregations, and indexing using a `books` collection.
 
-Before you begin this assignment, please make sure you have the following installed:
+---
 
-1. **MongoDB Community Edition** - [Installation Guide](https://www.mongodb.com/docs/manual/administration/install-community/)
-2. **MongoDB Shell (mongosh)** - This is included with MongoDB Community Edition
-3. **Node.js** - [Download here](https://nodejs.org/)
+## 📦 Requirements
+- [MongoDB Community Server](https://www.mongodb.com/try/download/community) installed
+- `mongosh` (MongoDB Shell)
+- A running MongoDB instance (default: `mongodb://localhost:27017`)
 
-### Node.js Package Setup
+---
 
-Once you have Node.js installed, run the following commands in your assignment directory:
+## 📂 Setup
+1. Start MongoDB (on Windows, open a terminal and run):
+   ```bash
+   mongod
+Connect using MongoDB Shell:
 
-```bash
-# Initialize a package.json file
-npm init -y
+mongosh
 
-# Install the MongoDB Node.js driver
-npm install mongodb
-```
 
-## Assignment Overview
+Create or switch to a database:
 
-This week focuses on MongoDB fundamentals including:
-- Creating and connecting to MongoDB databases
-- CRUD operations (Create, Read, Update, Delete)
-- MongoDB queries and filters
-- Aggregation pipelines
-- Indexing for performance
+use bookstore
 
-## Submission
 
-Complete all the exercises in this assignment and push your code to GitHub using the provided GitHub Classroom link.
+Insert some sample data:
 
-## Getting Started
+db.books.insertMany([
+  { title: "Book A", author: "Author 1", genre: "Fiction", year: 2005, price: 15, inStock: true },
+  { title: "Book B", author: "Author 2", genre: "Science", year: 2015, price: 25, inStock: false },
+  { title: "Book C", author: "Author 1", genre: "Fiction", year: 2020, price: 30, inStock: true }
+])
 
-1. Accept the GitHub Classroom assignment invitation
-2. Clone your personal repository that was created by GitHub Classroom
-3. Install MongoDB locally or set up a MongoDB Atlas account
-4. Run the provided `insert_books.js` script to populate your database
-5. Complete the tasks in the assignment document
+▶️ Running Queries
+Find all books in a specific genre
+db.books.find({ genre: "Fiction" })
 
-## Files Included
+Find books published after 2010
+db.books.find({ year: { $gt: 2010 } })
 
-- `Week1-Assignment.md`: Detailed assignment instructions
-- `insert_books.js`: Script to populate your MongoDB database with sample book data
+Find books by a specific author
+db.books.find({ author: "Author 1" })
 
-## Requirements
+Update the price of a specific book
+db.books.updateOne(
+  { title: "Book A" },
+  { $set: { price: 20 } }
+)
 
-- Node.js (v18 or higher)
-- MongoDB (local installation or Atlas account)
-- MongoDB Shell (mongosh) or MongoDB Compass
+Delete a book by its title
+db.books.deleteOne({ title: "Book B" })
 
-## Resources
+📊 Aggregations
+Average price by genre
+db.books.aggregate([
+  { $group: { _id: "$genre", avgPrice: { $avg: "$price" } } }
+])
 
-- [MongoDB Documentation](https://docs.mongodb.com/)
-- [MongoDB University](https://university.mongodb.com/)
-- [MongoDB Node.js Driver](https://mongodb.github.io/node-mongodb-native/) 
+Author with the most books
+db.books.aggregate([
+  { $group: { _id: "$author", total: { $sum: 1 } } },
+  { $sort: { total: -1 } },
+  { $limit: 1 }
+])
+
+Books grouped by decade
+db.books.aggregate([
+  { $group: {
+      _id: { $floor: { $divide: ["$year", 10] } },
+      count: { $sum: 1 }
+  }},
+  { $project: {
+      decade: { $concat: [ { $toString: { $multiply: ["$_id", 10] } }, "s" ] },
+      count: 1, _id: 0
+  }},
+  { $sort: { decade: 1 } }
+])
+
+⚡ Indexes
+Create an index on title
+db.books.createIndex({ title: 1 })
+
+Create a compound index on author and year
+db.books.createIndex({ author: 1, year: -1 })
+
+Check performance with explain()
+db.books.find({ title: "Book A" }).explain("executionStats")
+
+
